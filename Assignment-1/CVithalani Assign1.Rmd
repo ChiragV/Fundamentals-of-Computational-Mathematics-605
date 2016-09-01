@@ -1,0 +1,98 @@
+---
+title: 'Assignment-1 :: Fundamentals of Computational Mathematics'
+author: "Chirag Vithalani"
+date: "August 31, 2016"
+output: html_document
+---
+<hr />
+
+####Problem Set 1:
+#####(1) Calculate the dot product of $u.v$ where $u=[0.5;0.5]$ and $v=[3;-4]$
+
+```{r}
+
+u <-  c(0.5,0.5)
+v <- c(3,-4)
+
+dot.product<-u%*%v
+dot.product
+```
+
+#####(2) What are the lengths of $u$ and $v$? 
+
+Length of u:
+```{r}
+Length_of_u<-sqrt(u %*% u)
+Length_of_u
+```
+Length of v:
+```{r}
+Length_of_v<-sqrt(v %*% v)
+Length_of_v
+```
+
+#####(3) What is the linear combination: $3u-2v$?
+
+```{r}
+3*u -2*v
+
+```
+#####(4) What is the angle between u and v
+
+```{r}
+theta <- acos(dot.product/(Length_of_u*Length_of_v))
+theta
+```
+
+####Problem Set 2:
+Set up a system of equations with 3 variables and 3 constraints and solve for x. Please write a function in R that will take two variables (matrix A & constraint vector b) and solve using elimination. Your function should produce the right answer for the system of equations for any 3-variable, 3-equation system. You don't have to worry about degenerate cases and can safely assume that the function will only be tested with a system of equations that has a solution. Please note that you do have to worry about zero pivots, though. Please note that you should not use the built-in function solve to solve this system or use matrix inverses. The approach that you should employ is to construct an Upper Triangular Matrix and then back-substitute to get the solution. Alternatively, you can augment the matrix A with vector b and jointly apply the Gauss Jordan elimination procedure.
+
+Please test it with the system below and it should produce a solution $x = [-1.55;-0.32;0.95]$
+$$\begin{bmatrix}1 & 1 & 3 \\2 & -1 & 5 \\-1 & -2 & 4\end{bmatrix}\,\begin{bmatrix}x_1 \\x_2 \\x_3\end{bmatrix}=\begin{bmatrix}1 \\2 \\6\end{bmatrix}$$  
+
+
+
+```{r}
+# from http://stackoverflow.com/questions/16044377/how-to-do-gaussian-elimination-in-r-do-not-use-solve
+
+A <- array(c(1, 2, -1, 1, -1, -2, 3, 5, 4), dim=c(3,3))
+b <- c(1, 2, 6) # constraint vector
+
+solve_this<-function (A,b)
+{
+  p <- nrow(A)
+  
+  # binding A and b
+  binded <- cbind(A,b)  
+  binded[1,] <- binded[1,]/binded[1,1]
+  
+  for (i in 2:p)
+  {
+	   for (j in i:p) 
+	   {
+			binded[j, ] <- binded[j, ] - binded[i-1, ] * binded[j, i-1]
+	   }
+	   binded[i,] <- binded[i,]/binded[i,i]
+  }
+  
+  for (i in p:2)
+  {
+	   for (j in i:2-1) 
+	   {
+			binded[j, ] <- binded[j, ] - binded[i, ] * binded[j, i]
+	   }
+  }
+  print (binded)
+}
+
+solve_this(A,b)
+
+```
+
+####### Verifying using `solve` function:
+```{r}
+A <- array(c(1, 2, -1, 1, -1, -2, 3, 5, 4), dim=c(3,3))
+b <- c(1, 2, 6)
+solve(A, b)
+
+
