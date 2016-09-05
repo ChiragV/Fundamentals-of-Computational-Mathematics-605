@@ -1,0 +1,102 @@
+---
+title: 'Assignment-2 :: Fundamentals of Computational Mathematics'
+author: "Chirag Vithalani"
+date: "September 4, 2016"
+output: html_document
+---
+
+<hr />
+
+#####1 Show that A^T A 6 $\neq$ AA^T in general.
+
+Let's say <br /><br /><br />
+<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>A</mi><mo>=</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mi>a</mi></mtd></mtr><mtr><mtd><mi>b</mi></mtd><mtd><mn>1</mn></mtd></mtr></mtable></mfenced><mspace linebreak="newline"/><mi>A</mi><msup><mi>A</mi><mi>T</mi></msup><mo>=</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mi>a</mi></mtd></mtr><mtr><mtd><mi>b</mi></mtd><mtd><mn>1</mn></mtd></mtr></mtable></mfenced><mo>&#xA0;</mo><mo>&#xA0;</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mi>b</mi></mtd></mtr><mtr><mtd><mi>a</mi></mtd><mtd><mn>1</mn></mtd></mtr></mtable></mfenced><mo>&#xA0;</mo><mo>=</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn><mo>+</mo><msup><mi>a</mi><mn>2</mn></msup></mtd><mtd><mi>b</mi><mo>+</mo><mi>a</mi></mtd></mtr><mtr><mtd><mi>b</mi><mo>+</mo><mi>a</mi></mtd><mtd><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><mn>1</mn></mtd></mtr></mtable></mfenced><mspace linebreak="newline"/><msup><mi>A</mi><mi>T</mi></msup><mi>A</mi><mo>=</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mi>b</mi></mtd></mtr><mtr><mtd><mi>a</mi></mtd><mtd><mn>1</mn></mtd></mtr></mtable></mfenced><mo>&#xA0;</mo><mo>&#xA0;</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mi>a</mi></mtd></mtr><mtr><mtd><mi>b</mi></mtd><mtd><mn>1</mn></mtd></mtr></mtable></mfenced><mo>&#xA0;</mo><mo>=</mo><mfenced open="|" close="|"><mtable><mtr><mtd><mn>1</mn><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></mtd><mtd><mi>a</mi><mo>+</mo><mi>b</mi></mtd></mtr><mtr><mtd><mi>a</mi><mo>+</mo><mi>b</mi></mtd><mtd><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><mn>1</mn></mtd></mtr></mtable></mfenced><mspace linebreak="newline"/><mi>A</mi><msup><mi>A</mi><mi>T</mi></msup><mo>&#x2260;</mo><msup><mi>A</mi><mi>T</mi></msup><mi>A</mi><mspace linebreak="newline"/></math>
+
+<b>Using R</b>
+
+```{r}
+A=matrix(c(1,2,3,4), nrow=2, ncol=2) 
+A
+t(A)
+A %*% t(A)
+t(A) %*% A
+
+```
+
+#####2. For a special type of square matrix A, we get AT A = AAT.Under what conditions could this be true?
+
+For the identity matrix and  its variants, and symetric matrices $A^TA = AA^T$. Because a symmetric matrix and its transpose are equal, that is multiplying a matrix by itself.
+
+#####3. Write an R function to factorize a square matrix $A$ into LU or LDU 
+This function will factorize a 2x2 and a 3x3 matrix into LU
+```{r}
+f_LU <- function(A) {
+
+#Check dimensions of the matrix - 2x2 or 3x3
+
+# 2x2
+if (nrow(A) == 2) {
+
+  #Subract multipler
+  E <- -A[2,1] / A[1,1]
+  L <- matrix(c(1,0,E,1),nrow=2)
+  U <- L %*% A
+
+  L <- solve(L)
+  
+  print ("------ A ------")
+  print (A)
+  print ("------ L ------")
+  print(L)
+  print ("------ U ------")
+  print(U)
+
+  (L %*% U == A)
+
+#3x3
+} else if (nrow(A) == 3) {
+
+  #Subract multipler
+  e_21 <- -A[2,1] / A[1,1]
+  me_21 <- matrix(c(1,0,0,e_21,1,0,0,0,1), nrow=3)
+  A2 <- me_21 %*% A
+
+  #Subract multipler
+  e_31 <- -A2[3,1] / A2[1,1]
+  me_31 <- matrix(c(1,0,0,0,1,0,e_31,0,1), nrow=3)
+  A3 <- me_31 %*% A2
+
+  #Subtract multipler
+  e_32 <- -A3[3,2] / A3[2,2]
+  me_32 <- matrix(c(1,0,0,0,1,0,0,e_32,1), nrow=3)
+  U <- me_32 %*% A3
+
+  L <- solve(me_21) %*% solve(me_31) %*% solve(me_32)
+
+  A <- L %*% U
+  
+  print ("------ A ------")
+  print(A)
+  print ("------ L ------")
+  print(L)
+  print ("------ U ------")
+  print(U)
+
+  (L %*% U == A)
+ 
+  }
+}
+```
+
+Check with a 2x2 and a 3x3 matrix
+```{r}
+# 2x2
+A2x2 <- matrix(c(2,3,4,5), nrow = 2)
+f_LU(A2x2)
+
+# 3x3
+A3x3 <- matrix(c(8,9,10,0,1,2,11,12,13), nrow = 3)
+f_LU(A3x3)
+```
+
+
