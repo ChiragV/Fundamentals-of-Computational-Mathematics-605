@@ -1,0 +1,411 @@
+---
+title: "Fundamentals of Computational Mathematics -605-Final Exam"
+author: "Chirag Vithalani"
+date: "December 10, 2016"
+output: html_document
+---
+
+<style>
+hr {
+    border: 1px solid #357FAA;
+}
+</style>
+
+
+<hr />
+
+### Pick one of the quanititative independent variables from the training data set (train.csv) , and define that variable as  X.   Make sure this variable is skewed to the right!  Pick the dependent variable and define it as  Y.  
+
+### Probability.   Calculate as a minimum the below probabilities a through d.  Assume the small letter "x" is estimated as the 3d quartile of the X variable, and the small letter "y" is estimated as the 2d quartile of the Y variable.  Interpret the meaning of all probabilities.  In addition, make a table of counts as shown below.
+
+### a.	 P(X>x | Y>y)		b.  P(X>x, Y>y)		c.  P(X<x | Y>y)	
+
+<hr />
+
+### Reading data from train.csv
+
+#### Pick one of the quanititative independent variables from the training data set (train.csv) , and define that variable as  X.   Make sure this variable is skewed to the right!  Pick the dependent variable and define it as  Y.
+
+#### I have chosen LotArea as independent variable and SalePrice as dependent variable.
+
+
+
+```{r warning=FALSE,message=FALSE}
+
+#install.packages('ggplot2')
+library(ggplot2)
+exam_data<-read.csv("train.csv")
+#economyRanking<-subset(exam_data, select=c("YearBuilt","SalePrice"))
+economyRanking<-exam_data
+#head(economyRanking,3)
+newdata <- economyRanking[with(economyRanking, order(YearBuilt)), ]
+#head(newdata)
+ggplot(data = newdata) + geom_density(aes(x=newdata$LotArea), fill="blue")
+#GarageArea
+```
+
+As we can see variable LotArea is right skewed (also known as positively skewed).
+
+```{r}
+summary(newdata$LotArea)
+```
+Also for righ skewed data mean > media, which is confirmed.
+
+#### a. P(X>x \| Y>y)  
+
+#### Assume the small letter "x" is estimated as the 3d quartile of the X variable, and the small letter "y" is estimated as the 2d quartile of the Y variable.
+
+```{r warning=FALSE,message=FALSE}
+
+x<-newdata$LotArea
+y<-newdata$SalePrice
+quantile(x, probs = 0.75,na.rm=TRUE)
+quantile(y, probs = 0.5)
+
+# Probability P(X > x and Y > y)
+p1 <- nrow(subset(newdata, newdata$LotArea > quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE))) / nrow(newdata)
+
+
+# Probability P(Y > y)
+p2 <- nrow(subset(newdata, newdata$LotArea > quantile(newdata$LotArea, probs = 0.5,na.rm=TRUE))) / nrow(newdata)
+#a.	 P(X>x | Y>y)
+p1 / p2
+
+```
+#### b. P(X>x, Y>y)
+
+```{r warning=FALSE,message=FALSE}
+nrow(subset(newdata, newdata$LotArea > quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.5))) / nrow(newdata)
+
+```
+#### c. P(X < x \| Y > y)
+
+```{r warning=FALSE,message=FALSE}
+# Is the P(X < x and Y > y) divided by P(Y > y)
+
+# Probability P(X < x and Y > y)
+p1 <- nrow(subset(newdata, newdata$LotArea <= quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE))) / nrow(newdata)
+
+# Probability P(Y > y)
+p2 <- nrow(subset(newdata, newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE))) / nrow(newdata)
+p1 / p2
+
+```
+
+```{r}
+# Compute value for (a)
+a<-nrow(subset(newdata, newdata$LotArea <= quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice <= quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE)))
+a
+
+```
+
+```{r}
+# Compute value for (b)
+b<-nrow(subset(newdata, newdata$LotArea <= quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE)))
+b
+```
+
+```{r}
+# Compute value for (c)
+c<-nrow(subset(newdata, newdata$LotArea > quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice <= quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE)))
+
+c
+```
+
+
+
+```{r}
+# Compute value for (d)
+d<-nrow(subset(newdata, newdata$LotArea > quantile(newdata$LotArea, probs = 0.75,na.rm=TRUE) & newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.5,na.rm=TRUE)))
+
+d
+```
+
+
+
+
+x/y          |<=2d quartile|>2d quartile|Total
+-------------|-------------|------------|-----
+<=3d quartile|   `r a`     |    `r b`   |`r a+b`
+>3d quartile |     `r c`   |    `r d`   |`r c+d`
+Total        |    `r a+c`  |    `r b+d` |`r a+b+c+d`
+
+
+Does splitting the data in this fashion make them independent? No. The fact that we can take observations and subset them doesn't make them independent or dependent.
+
+<hr />
+
+Let A be the new variable counting those observations above the 3rd quartile for X, and let B be the new variable counting those observations for the 2nd quartile for Y. Does P(A|B) = P(A) * P(B)? Check mathematically. No - see below.
+
+```{r}
+
+A <- nrow(subset(newdata, newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.75,na.rm=TRUE)))
+B <- nrow(subset(newdata, newdata$LotArea <= quantile(newdata$LotArea, probs = 0.5,na.rm=TRUE)))
+# P(A)
+pA <- A / nrow(newdata)
+# P(B)
+pB <- B / nrow(newdata)
+# P(A|B)
+pAB <- nrow(subset(newdata, newdata$SalePrice > quantile(newdata$SalePrice, probs = 0.75,na.rm=TRUE) & newdata$LotArea <= quantile(newdata$LotArea, probs = 0.5,na.rm=TRUE))) / nrow(newdata)
+
+pA * pB
+
+pAB
+
+```
+
+Evaluate by running a Chi Square test for association.
+
+```{r}
+chisqtbl <- table(newdata$SalePrice, newdata$LotArea)
+chisq.test(chisqtbl)
+```
+<hr />
+
+#### Descriptive and Inferential Statistics
+#### Provide univariate descriptive statistics and appropriate plots for the training data set.Provide a scatterplot of X and Y. Provide a 95% CI for the difference in the mean of the variables.Derive a correlation matrix for two of the quantitative variables you selected.Test the hypothesis that the correlation between these variables is 0 and provide a 99% confidence interval.Discuss the meaning of your analysis.
+
+##### Here are summary statistics for SalePrice and LotArea to supplment the Histograms in the prior section:
+
+```{r}
+summary(newdata$SalePrice)
+```
+
+```{r}
+summary(newdata$LotArea)
+```
+
+
+```{r}
+# Load ggplot2
+#install.packages("ggplot2", repos='https://mirrors.nics.utk.edu/cran/')
+library(ggplot2)
+
+ggplot(newdata, aes(x=newdata$LotArea, y=newdata$SalePrice)) + geom_point() + labs(title="LotArea vs. SalePrice",x="LotArea", y = "SalePrice")
+
+```
+
+
+scatterplot
+
+```{r}
+#ggplot(newdata, aes(x=newdata$LotArea, y=newdata$SalePrice)) + geom_point() + labs(title="LotArea vs. SalePrice",x="LotArea", y = "SalePrice")
+
+```
+
+
+It certainly looks like the variables are correlated.
+
+Provide a 95% confidence interval for the difference in the mean of the variables.
+
+```{r}
+# Difference between the means
+dm <- mean(newdata$SalePrice) - mean(newdata$LotArea,na.rm = TRUE)
+dm
+# Standard error of the difference between means
+se <- sqrt(((sd(newdata$SalePrice)/nrow(newdata))+(sd(newdata$LotArea,na.rm = TRUE)/nrow(newdata))))
+se
+# 95% confidence interval 
+c(dm - se*qnorm(0.975),dm + se*qnorm(0.975))
+
+```
+
+Derive a correlation matrix for two of the quantitative variables you selected.
+
+```{r}
+newdata1<-subset(newdata, LotArea !='NA')
+newdata<-newdata1
+
+cm <- cor(newdata[c("SalePrice","LotArea")])
+cm
+```
+
+Test the hypothesis that the correlation between these variables is 0 and provide a 99% confidence interval.
+
+```{r}
+cor.test(newdata$SalePrice,newdata$LotArea,conf.level = 0.99)
+```
+
+Given the p-value, the likelihood that the hypothesis of a zero correlation is very low.
+
+<hr />
+
+## Linear Algebra and Correlation
+### Invert your correlation matrix. (This is known as the precison matrix).
+
+```{r}
+im <- solve(cm)
+im
+```
+
+** Multiply the correlation matrix by the precision matrix, and then mutiply the precision matrix by the correlation matrix. **
+
+```{r}
+cm %*% im
+
+```
+
+```{r}
+im %*% cm
+```
+The result in both cases is the identity matrix.
+
+<hr />
+
+## Calculus Based Probability and Statistics
+### For your variable which is skewed to the right, shift it so that the minimum value is above zero.
+
+```{r}
+
+#Create new DF
+hf_min_val <- newdata
+# Check range for SalePrice
+c(hf_min_val$SalePrice[which.min(hf_min_val$SalePrice)],hf_min_val$SalePrice[which.max(hf_min_val$SalePrice)])
+
+```
+
+
+```{r}
+# Add 34 to all values
+#hf_min_val$SalePrice <- hf_min_val$SalePrice + 34
+# Check range for LotArea
+c(hf_min_val$LotArea[which.min(hf_min_val$LotArea)],hf_min_val$LotArea[which.max(hf_min_val$LotArea)])
+```
+
+```{r}
+# Add 71 to all values
+#hf_min_val$LotArea <- hf_min_val$LotArea + 71
+```
+
+
+Though both variabiles are skewed to the right, for this exercise, I will use the LotArea variable.
+
+Then load the MASS package and run fitdistr to fit an exponential probability density function. Documentation for MASS::fitdistr is here: https::/stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html
+
+```{r}
+install.packages("MASS", repos='https://mirrors.nics.utk.edu/cran/')
+library(MASS)
+fd <- fitdistr(hf_min_val$LotArea, "exponential")
+```
+
+Find the optimal value of lambda for this distribution, and then take 1000 samples from this exponential distribution using this value. Plot a histogram and compare it with a histogram of your original variable.
+
+```{r}
+# Optimal value of lambda
+fd$estimate
+```
+
+
+```{r}
+# 100 samples from this distribution
+r <- rexp(1000,fd$estimate)
+# Plot a histogram using 1000 samples
+hist(r, freq = FALSE, main = "Histogram of 1000 Samples")
+```
+
+
+```{r}
+# Plot a histogram using original variable
+hist(newdata$LotArea, freq = FALSE,  main = "Histogram of LotArea")
+```
+
+
+
+<!--The two histograms are similar in shape except that one starts below zero and other only contains positive values. -->
+
+Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).
+
+```{r}
+# 5th percentile
+pexp(quantile(r, probs = 0.05), rate=fd$estimate, lower.tail = TRUE)
+```
+
+```{r}
+# 95th percentile
+pexp(quantile(r, probs = 0.95), rate=fd$estimate, lower.tail = TRUE)
+```
+Also generate a 95% confidence interval from the empirical data, assuming normality.
+
+```{r}
+# y was set to newdata$LotArea earlier
+# Calculate mean and standard deviation
+m <- mean(y)
+se <- sd(y)
+# 95% confidence interval
+c(m - (se*qnorm(0.975)), m + (se*qnorm(0.975)))
+```
+Finally, provide the empirical 5th percentile and 95th percentile of the data.
+
+```{r}
+quantile(y, probs = 0.05)
+```
+
+```{r}
+quantile(y, probs = 0.95)
+```
+
+Discuss.
+
+There is a large divergence between the 5% and 95% percentiles (assuming normality) and the 5th and 95th percentiles determined empirically because the distribution is not normal, it is exponetial.
+
+<hr />
+
+```{r echo=FALSE,message=FALSE}
+suppressWarnings(require(dplyr))
+cleanup<-function(data)
+{
+  subset.int<-select_if(data, is.numeric)
+  subset.int[is.na(subset.int)] <- 0
+  subset.int<-subset.int[complete.cases(subset.int),]
+  return(subset.int)
+}
+
+```
+
+### Modeling.  
+#### Build some type of regression  model and submit your model to the competition board.  
+
+```{r}
+
+#reading test.csv file
+test <-read.csv("https://raw.githubusercontent.com/chirag-vithlani/Fundamentals-of-Computational-Mathematics-605/master/project/test.csv", header = TRUE)
+
+#reading train.csv file
+train <- read.csv("https://raw.githubusercontent.com/chirag-vithlani/Fundamentals-of-Computational-Mathematics-605/master/project/train.csv", header = TRUE)
+
+train<-subset(train, select=c("Id", "LotArea","SalePrice"))
+
+#Removing ID column
+train<-train%>%select(-Id)
+
+
+traincleaned<-cleanup(train)
+testcleaned<-cleanup(test)
+
+# Fitting Linear Models
+upper<-lm(SalePrice~.,traincleaned)
+lower<-lm(SalePrice~1, traincleaned)
+
+stepResults<-step(lower,scope=list(lower=lower,upper=upper),direction="both")
+
+
+
+par(mfrow=c(1,1))
+#plot(data.frame('SalePrice'=predict(stepResults, testcleaned), 'Id'=testcleaned$Id))
+
+result<-data.frame('Id'=testcleaned$Id,'SalePrice'=predict(stepResults, testcleaned))
+length(result$SalePrice)
+
+write.csv(result, file = "kaggle_Chirag.csv", row.names = F)
+
+par(mfrow=c(2,1))
+plot(density(traincleaned$SalePrice),main="Train Data")
+plot(density(na.omit(result$SalePrice)),main="Prediction")
+
+
+
+```
+
+#### Below shows the score on Kaggle
+
+![](./Kaggle_score.PNG)
